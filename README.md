@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-[Pval](https://forest-canopy.github.io/assets/pval.html).
+[Pval](https://forest-canopy.github.io/assets/pval/pval.html).
 
 You can use the [editor on GitHub](https://github.com/forest-canopy/forest-canopy.github.io/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
