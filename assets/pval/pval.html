@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="" xml:lang="">
   <head>
-    <title>P-value and cross-validation</title>
+    <title>P-value and/or cross-validation</title>
     <meta charset="utf-8" />
     <meta name="author" content="Masatoshi Katabuchi" />
     <meta name="date" content="2020-09-29" />
@@ -14,7 +14,7 @@
     <textarea id="source">
 class: center, middle, inverse, title-slide
 
-# P-value and cross-validation
+# P-value and/or cross-validation
 ### Masatoshi Katabuchi
 ### September 29, 2020
 
@@ -24,266 +24,155 @@ class: center, middle, inverse, title-slide
 
 
 
-# P val problem
-
-## *r* = 0.8
 
 
-```r
-library(tidyverse)
-library(mvtnorm)
-theme_set(theme_bw())
 
-set.seed(123)
-N1 &lt;- 20
-N2 &lt;- 10000
-rho &lt;- 0.8
-sig1 &lt;- 1
-sig2 &lt;- 1
+# Assuming that
+
+- Your experimental design is solid.
+- Your measurement is biologically meaningful and shows greater variance than the measurement
+  errors.  
+- You know a theory or logic behind the patterns you observed. 
 
 
-S &lt;- matrix(c(sig1^2, rho*sig1*sig2, 
-              rho*sig1*sig2, sig2^2), ncol = 2)
+![link](images/QR.png)
+Link to the slide.
 
-xy1 &lt;- rmvnorm(N1, c(0, 0), S)
-xy2 &lt;- rmvnorm(N2, c(0, 0), S)
-colnames(xy1) &lt;-  colnames(xy2) &lt;- c("x", "y")
-
-dat1 &lt;- as_tibble(xy1)
-dat2 &lt;- as_tibble(xy2)
-```
+- Code for this slide [https://github.com/mattocci27/pval](https://github.com/mattocci27/pval)
 
 ---
 
+class: center, middle
 
-```r
-rho_est &lt;- cor.test(dat1$x, dat1$y)$estimate %&gt;% round(2)
-p_est &lt;- cor.test(dat1$x, dat1$y)$p.value 
+# Problems of p-values in liner and non-linear models
 
-p_est_fun &lt;- function(p_est) {
-  if (p_est &lt; 0.001) {
-    p_est &lt;- "p &lt; 0.001"
-  } else if (p_est &lt; 0.01) {
-    p_est &lt;- "p &lt; 0.01"
-  } else if (p_est &lt; 0.05) {
-    p_est &lt;- "p &lt; 0.05"
-  } else {
-    p_est &lt;- paste("p = ", p_est)
-  }
-  p_est
-}
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
+class: center, middle
 
-```r
-p1 &lt;- ggplot(dat1, aes(x = x, y = y)) +
-  geom_point() +
-  ggtitle(paste0("N = 20,", " r = ", rho_est, ", ", p_est_fun(p_est)))
-
-p1
-```
-
-![](pval_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+# P-values sometimes get very small when there is no meaningfull pattern  
 
 
-```r
-lm(y ~ x, dat1) %&gt;%
-  summary
-```
 
-```
-## 
-## Call:
-## lm(formula = y ~ x, data = dat1)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -1.07209 -0.28427 -0.01763  0.15705  1.13761 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) -0.06535    0.12930  -0.505    0.619    
-## x            0.91871    0.15288   6.009 1.11e-05 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.5744 on 18 degrees of freedom
-## Multiple R-squared:  0.6673,	Adjusted R-squared:  0.6489 
-## F-statistic: 36.11 on 1 and 18 DF,  p-value: 1.106e-05
-```
+&lt;img src="images/summay_plt.png" alt="drawing" width="450"/&gt;
 
+---
 
-```r
-rho_est2 &lt;- cor.test(dat2$x, dat2$y)$estimate %&gt;% round(2)
-p_est2 &lt;- cor.test(dat2$x, dat2$y)$p.value
+# D. Large sample size with no clear pattern
 
-p2 &lt;- ggplot(dat2, aes(x = x, y = y)) +
-  geom_point(alpha = 0.2) +
-  ggtitle(paste0("N = 10,000,", " r = ", rho_est2, ", ", p_est_fun(p_est2)))
+.pull-left-40[
+![](pval_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
 
-p2
-```
+]
 
-![](pval_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
-
-
-```r
-lm(y ~ x, dat2) %&gt;%
-  summary
-```
+.small[
+.pull-right-60[
 
 ```
 ## 
 ## Call:
-## lm(formula = y ~ x, data = dat2)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -2.15813 -0.41178  0.00491  0.40844  2.29272 
-## 
-## Coefficients:
-##              Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) -0.006329   0.005990  -1.057    0.291    
-## x            0.798038   0.005973 133.608   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.599 on 9998 degrees of freedom
-## Multiple R-squared:  0.641,	Adjusted R-squared:  0.641 
-## F-statistic: 1.785e+04 on 1 and 9998 DF,  p-value: &lt; 2.2e-16
-```
-
-## *r* = 0.1
-
-
-```r
-rho &lt;- 0.1
-
-S &lt;- matrix(c(sig1^2, rho*sig1*sig2, 
-              rho*sig1*sig2, sig2^2), ncol = 2)
-
-xy1 &lt;- rmvnorm(N1, c(0, 0), S)
-xy2 &lt;- rmvnorm(N2, c(0, 0), S)
-colnames(xy1) &lt;-  colnames(xy2) &lt;- c("x", "y")
-
-dat3 &lt;- as_tibble(xy1)
-dat4 &lt;- as_tibble(xy2)
-```
-
-
-```r
-rho_est3 &lt;- cor.test(dat3$x, dat3$y)$estimate %&gt;% round(2)
-p_est3 &lt;- cor.test(dat3$x, dat3$y)$p.value
-
-p3 &lt;- ggplot(dat3, aes(x = x, y = y)) +
-  geom_point() +
-  ggtitle(paste0("N = 20,", " r = ", rho_est3, ", ", p_est_fun(p_est3)))
-p3
-```
-
-![](pval_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
-
-
-```r
-lm(y ~ x, dat3) %&gt;%
-  summary
-```
-
-```
-## 
-## Call:
-## lm(formula = y ~ x, data = dat3)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -1.76606 -0.54751  0.00794  0.55575  1.70947 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)
-## (Intercept)   0.2574     0.2169   1.187    0.251
-## x             0.2528     0.2042   1.238    0.232
-## 
-## Residual standard error: 0.9677 on 18 degrees of freedom
-## Multiple R-squared:  0.07849,	Adjusted R-squared:  0.0273 
-## F-statistic: 1.533 on 1 and 18 DF,  p-value: 0.2315
-```
-
-
-
-```r
-rho_est4 &lt;- cor.test(dat4$x, dat4$y)$estimate %&gt;% round(2)
-p_est4 &lt;- cor.test(dat4$x, dat4$y)$p.value
-
-p4 &lt;- ggplot(dat4, aes(x = x, y = y)) +
-  geom_point() +
-  ggtitle(paste0("N = 20,", " r = ", rho_est4, ", ", p_est_fun(p_est4)))
-p4
-```
-
-![](pval_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
-
-
-```r
-lm(y ~ x, dat4) %&gt;%
-  summary
-```
-
-```
-## 
-## Call:
-## lm(formula = y ~ x, data = dat4)
+## lm(formula = y ~ x + I(x^2), data = dat4)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -4.1028 -0.6775  0.0010  0.6852  4.2707 
+## -24.010  -6.456   0.004   6.009  32.078 
 ## 
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) 0.009016   0.009997   0.902    0.367    
-## x           0.099445   0.010052   9.893   &lt;2e-16 ***
+## (Intercept)  -1.2873     0.7917  -1.626 0.105535    
+## x             1.9848     0.6677   2.973 0.003320 ** 
+## I(x^2)       -1.4718     0.4316  -3.410 0.000788 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Residual standard error: 0.9995 on 9998 degrees of freedom
-## Multiple R-squared:  0.009695,	Adjusted R-squared:  0.009596 
-## F-statistic: 97.88 on 1 and 9998 DF,  p-value: &lt; 2.2e-16
+## Residual standard error: 9.355 on 197 degrees of freedom
+## Multiple R-squared:  0.08195,	Adjusted R-squared:  0.07263 
+## F-statistic: 8.792 on 2 and 197 DF,  p-value: 0.0002201
 ```
+]]
 
-```
-ggpubr::ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2, labels = LETTERS[1:4])
-```
+---
 
-# Cross-validation
+class: center, middle
+
+# One solution: Cross-validation
+
+---
 
 ## Idea
 
+Estimating how accurately a model can predict a new data set.
 
-```r
-dat1 &lt;- dat1 %&gt;%
-  mutate(test = sample(c(rep("train", 18), rep("test", 2))))
+.pull-left-50[
+![](pval_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+]
 
-train1 &lt;- dat1 %&gt;%
-  filter(test == "tran")
 
-test1 &lt;- dat1 %&gt;%
-  filter(test == "test")
 
-fit1 &lt;- lm(y ~ x, test1)
 
-ggplot(dat1, aes(x = x, y = y, col = test)) +
-  geom_point() +
-  geom_abline(slope = fit1$coefficients[1], yintercept = fit1$coefficients[2], 
-              col = "grey20") +
-  ggtitle(paste0("N = 20,", " r = ", rho_est, ", ", p_est_fun(p_est)))
-```
+.small[
+.pull-right-50[
 
-```
-## Warning: Ignoring unknown parameters: yintercept
-```
+1. Use subset of the data (e.g., 90 %) to make a regression line (blue points, solid line)
+2. Quantify how much this blue line can predict the data that were not used to
+   make the model (red points). For example, we can calculate `\(r^2\)`.
+3. Repeat 1-2 until you evaluate all the data. 
+4. Finally, calculate the mean of the each `\(r^2\)` (cross-validated `\(r^2\)`)
+- In this example, each `\(r^2\)` = -0.08, -0.05, -0.2, -0.12, -0.1, -0.09, 0.07, -0.04, 0.18, 0.12
+- `\(r_{CV}^2\)` = -0.04
+- When the model is very bad, `\(r^2\)` can be negative.
+]]
 
-![](pval_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+---
+
+Small sample size is a problem too.
+
+.pull-left-50[
+![](pval_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+]
+
+
+.small[
+.pull-right-50[
+ - Based on 10-folds cross-validation, `\(r_{CV}^2\)` = 0.08, which is much smaller than `\(r^2\)` = 0.76
+- If we use a liner model, `\(r_{CV}^2\)` = 0.37
+- A linear regression is more meaningfull or useful than a quadratic
+  regression in this example.
+- Reporting `\(r_{CV}^2\)` (and a figure) is more fair than reporting *P*-value alone
+  and a table.
+]]
+
+---
+
+# Conclusion
+
+- Reporting *P*-value alone is a problem.
+- Presenting indices that assess the quality of predictors (e.g., `\(r 2\)`) is more kind for readers.
+- Model validation is important, especially when the model is complicated 
+    - Multiple regressions 
+    - General additive models...
+- Draw plots when it's possible
+- Example for cross-validation:
+   - Katabuchi, M., S. J. Wright, N. G. Swenson, K. J. Feeley, R. Condit, S. P. Hubbell, and S. J. Davies. 2017. Contrasting outcomes of species- and community-level analyses of the temporal consistency of functional composition. Ecology 98:2273–2280.[https://doi.org/10.1002/ecy.1952](https://doi.org/10.1002/ecy.1952)
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
