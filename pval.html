@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>P-value and cross-validation</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Masatoshi Katabuchi" />
+    <meta name="date" content="2020-09-29" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="fc2.css" type="text/css" />
+    <link rel="stylesheet" href="fc2-fonts.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# P-value and cross-validation
+### Masatoshi Katabuchi
+### September 29, 2020
+
+---
+
+
+
+
+
+# P val problem
+
+## *r* = 0.8
+
+
+```r
+library(tidyverse)
+library(mvtnorm)
+theme_set(theme_bw())
+
+set.seed(123)
+N1 &lt;- 20
+N2 &lt;- 10000
+rho &lt;- 0.8
+sig1 &lt;- 1
+sig2 &lt;- 1
+
+
+S &lt;- matrix(c(sig1^2, rho*sig1*sig2, 
+              rho*sig1*sig2, sig2^2), ncol = 2)
+
+xy1 &lt;- rmvnorm(N1, c(0, 0), S)
+xy2 &lt;- rmvnorm(N2, c(0, 0), S)
+colnames(xy1) &lt;-  colnames(xy2) &lt;- c("x", "y")
+
+dat1 &lt;- as_tibble(xy1)
+dat2 &lt;- as_tibble(xy2)
+```
+
+---
+
+
+```r
+rho_est &lt;- cor.test(dat1$x, dat1$y)$estimate %&gt;% round(2)
+p_est &lt;- cor.test(dat1$x, dat1$y)$p.value 
+
+p_est_fun &lt;- function(p_est) {
+  if (p_est &lt; 0.001) {
+    p_est &lt;- "p &lt; 0.001"
+  } else if (p_est &lt; 0.01) {
+    p_est &lt;- "p &lt; 0.01"
+  } else if (p_est &lt; 0.05) {
+    p_est &lt;- "p &lt; 0.05"
+  } else {
+    p_est &lt;- paste("p = ", p_est)
+  }
+  p_est
+}
+```
+
+---
+
+
+```r
+p1 &lt;- ggplot(dat1, aes(x = x, y = y)) +
+  geom_point() +
+  ggtitle(paste0("N = 20,", " r = ", rho_est, ", ", p_est_fun(p_est)))
+
+p1
+```
+
+![](pval_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+
+```r
+lm(y ~ x, dat1) %&gt;%
+  summary
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = dat1)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.07209 -0.28427 -0.01763  0.15705  1.13761 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.06535    0.12930  -0.505    0.619    
+## x            0.91871    0.15288   6.009 1.11e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.5744 on 18 degrees of freedom
+## Multiple R-squared:  0.6673,	Adjusted R-squared:  0.6489 
+## F-statistic: 36.11 on 1 and 18 DF,  p-value: 1.106e-05
+```
+
+
+```r
+rho_est2 &lt;- cor.test(dat2$x, dat2$y)$estimate %&gt;% round(2)
+p_est2 &lt;- cor.test(dat2$x, dat2$y)$p.value
+
+p2 &lt;- ggplot(dat2, aes(x = x, y = y)) +
+  geom_point(alpha = 0.2) +
+  ggtitle(paste0("N = 10,000,", " r = ", rho_est2, ", ", p_est_fun(p_est2)))
+
+p2
+```
+
+![](pval_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+
+```r
+lm(y ~ x, dat2) %&gt;%
+  summary
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = dat2)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -2.15813 -0.41178  0.00491  0.40844  2.29272 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -0.006329   0.005990  -1.057    0.291    
+## x            0.798038   0.005973 133.608   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.599 on 9998 degrees of freedom
+## Multiple R-squared:  0.641,	Adjusted R-squared:  0.641 
+## F-statistic: 1.785e+04 on 1 and 9998 DF,  p-value: &lt; 2.2e-16
+```
+
+## *r* = 0.1
+
+
+```r
+rho &lt;- 0.1
+
+S &lt;- matrix(c(sig1^2, rho*sig1*sig2, 
+              rho*sig1*sig2, sig2^2), ncol = 2)
+
+xy1 &lt;- rmvnorm(N1, c(0, 0), S)
+xy2 &lt;- rmvnorm(N2, c(0, 0), S)
+colnames(xy1) &lt;-  colnames(xy2) &lt;- c("x", "y")
+
+dat3 &lt;- as_tibble(xy1)
+dat4 &lt;- as_tibble(xy2)
+```
+
+
+```r
+rho_est3 &lt;- cor.test(dat3$x, dat3$y)$estimate %&gt;% round(2)
+p_est3 &lt;- cor.test(dat3$x, dat3$y)$p.value
+
+p3 &lt;- ggplot(dat3, aes(x = x, y = y)) +
+  geom_point() +
+  ggtitle(paste0("N = 20,", " r = ", rho_est3, ", ", p_est_fun(p_est3)))
+p3
+```
+
+![](pval_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+
+
+```r
+lm(y ~ x, dat3) %&gt;%
+  summary
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = dat3)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.76606 -0.54751  0.00794  0.55575  1.70947 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept)   0.2574     0.2169   1.187    0.251
+## x             0.2528     0.2042   1.238    0.232
+## 
+## Residual standard error: 0.9677 on 18 degrees of freedom
+## Multiple R-squared:  0.07849,	Adjusted R-squared:  0.0273 
+## F-statistic: 1.533 on 1 and 18 DF,  p-value: 0.2315
+```
+
+
+
+```r
+rho_est4 &lt;- cor.test(dat4$x, dat4$y)$estimate %&gt;% round(2)
+p_est4 &lt;- cor.test(dat4$x, dat4$y)$p.value
+
+p4 &lt;- ggplot(dat4, aes(x = x, y = y)) +
+  geom_point() +
+  ggtitle(paste0("N = 20,", " r = ", rho_est4, ", ", p_est_fun(p_est4)))
+p4
+```
+
+![](pval_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+
+
+```r
+lm(y ~ x, dat4) %&gt;%
+  summary
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x, data = dat4)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -4.1028 -0.6775  0.0010  0.6852  4.2707 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 0.009016   0.009997   0.902    0.367    
+## x           0.099445   0.010052   9.893   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.9995 on 9998 degrees of freedom
+## Multiple R-squared:  0.009695,	Adjusted R-squared:  0.009596 
+## F-statistic: 97.88 on 1 and 9998 DF,  p-value: &lt; 2.2e-16
+```
+
+```
+ggpubr::ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2, labels = LETTERS[1:4])
+```
+
+# Cross-validation
+
+## Idea
+
+
+```r
+dat1 &lt;- dat1 %&gt;%
+  mutate(test = sample(c(rep("train", 18), rep("test", 2))))
+
+train1 &lt;- dat1 %&gt;%
+  filter(test == "tran")
+
+test1 &lt;- dat1 %&gt;%
+  filter(test == "test")
+
+fit1 &lt;- lm(y ~ x, test1)
+
+ggplot(dat1, aes(x = x, y = y, col = test)) +
+  geom_point() +
+  geom_abline(slope = fit1$coefficients[1], yintercept = fit1$coefficients[2], 
+              col = "grey20") +
+  ggtitle(paste0("N = 20,", " r = ", rho_est, ", ", p_est_fun(p_est)))
+```
+
+```
+## Warning: Ignoring unknown parameters: yintercept
+```
+
+![](pval_files/figure-html/unnamed-chunk-12-1.png)&lt;!-- --&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+<script>
+(function() {
+  var divHTML = document.querySelectorAll(".details-open");
+  divHTML.forEach(function (el) {
+    var preNodes = el.getElementsByTagName("pre");
+    var outputNode = preNodes[1];
+    outputNode.outerHTML = "<details open class='output'><summary>Output</summary>" + outputNode.outerHTML + "</details>";
+  })
+})();
+(function() {
+  var divHTML = document.querySelectorAll(".details");
+  divHTML.forEach(function (el) {
+    var preNodes = el.getElementsByTagName("pre");
+    var outputNode = preNodes[1];
+    outputNode.outerHTML = "<details class='output'><summary>Output</summary>" + outputNode.outerHTML + "</details>";
+  })
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
