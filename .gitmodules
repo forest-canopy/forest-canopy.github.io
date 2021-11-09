@@ -1,6 +1,3 @@
 [submodule "assets/autocor"]
 	path = assets/autocor
 	url = https://github.com/mattocci27/autocor.git
-[submodule "assets/PDFD"]
-	path = assets/PDFD
-	url = git@github.com:mattocci27/PDFD.git
