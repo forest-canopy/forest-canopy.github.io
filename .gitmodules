@@ -1,0 +1,3 @@
+[submodule "assets/PDFD"]
+	path = assets/PDFD
+	url = https://github.com/mattocci27/PDFD.git
