@@ -1,3 +1,7 @@
 [submodule "assets/PDFD"]
 	path = assets/PDFD
 	url = https://github.com/mattocci27/PDFD.git
+
+[submodule "assets/phy-fun-div"]
+	path = assets/phy-fun-div
+	url = https://github.com/mattocci27/phy-fun-div.git
