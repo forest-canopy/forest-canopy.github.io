@@ -5,3 +5,7 @@
 [submodule "assets/phy-fun-div"]
 	path = assets/phy-fun-div
 	url = https://github.com/mattocci27/phy-fun-div.git
+
+[submodule "assets/bayes-afec"]
+	path = assets/bayes-afec
+	url = https://github.com/mattocci27/bayes-afec.git
