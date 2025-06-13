@@ -9,3 +9,6 @@
 [submodule "assets/bayes-afec"]
 	path = assets/bayes-afec
 	url = https://github.com/mattocci27/bayes-afec.git
+[submodule "assets/bayes-workshop-xtbg"]
+	path = assets/bayes-workshop-xtbg
+	url = https://github.com/mattocci27/bayes-workshop-xtbg.git
