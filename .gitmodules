@@ -12,3 +12,6 @@
 [submodule "assets/bayes-workshop-xtbg"]
 	path = assets/bayes-workshop-xtbg
 	url = https://github.com/mattocci27/bayes-workshop-xtbg.git
+[submodule "assets/afec-bayes-2025"]
+	path = assets/afec-bayes-2025
+	url = https://github.com/mattocci27/afec-bayes-2025
